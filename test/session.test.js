@@ -1,19 +1,18 @@
 var assert = require('assert');
-var debug = require('debug')('rets.js:session.test.js');
+var url = require('url');
+// var debug = require('debug')('rets.js:session.test.js');
 
 module.exports = describe('Session', function(){
 
     var Session = null;
     var instance = null;
-    var url = 'http://user:pass@rets.server.com:9160/Login.asmx/Login';
-    var config = {
-        userAgent: 'test-ua',
-        userAgentPassword: 'test-password',
-        version: 'blah'
-    };
+    var config = require('./servers/config.json')[0];
     var expectedDefaults = {
-        UA: 'RETS-Connector1/2',
-        UAP: '',
+        url: null,
+        ua: {
+            name: 'RETS-Connector1/2',
+            pass: ''
+        },
         version: 'RETS/1.7.2'
     };
 
@@ -26,7 +25,7 @@ module.exports = describe('Session', function(){
     });
 
     beforeEach('beforeEach description', function(){
-        instance = new Session(url, config);
+        instance = new Session(config);
     });
 
     afterEach('afterEach description', function(){
@@ -50,10 +49,43 @@ module.exports = describe('Session', function(){
     });
 
     it('Has the correct set of expected defaults.', function(){
-        var instance = new Session(url);
-        Object.keys(expectedDefaults).forEach(function(key) {
-            assert.equal(expectedDefaults[key], instance.defaults[key]);
-        });
+        var instance = new Session(config);
+        assert.deepEqual(expectedDefaults, instance.defaults);
+    });
+
+    it('Requires a url to instantiate',function(){
+        // assert.throws(function(){
+        //     new Session();
+        // }, Error);
+        try {
+            new Session({});
+        } catch(e) {
+            assert.equal(e.message, 'options.url is required.');
+        }
+    });
+
+    it('Requires a url to be a string or an object',function(){
+        try {
+            new Session({ url: true });
+        } catch(e) {
+            assert.equal(e.message, 'options.url is not a string or an object.');
+        }
+    });
+
+    it('Requires string urls to be valid',function(){
+        try {
+            new Session({ url: 'htp:/rets.org' });
+        } catch(e) {
+            assert.equal(e.message, 'invalid options.url.host.');
+        }
+    });
+
+    it('Requires string urls to contain auth credentials',function(){
+        try {
+            new Session({ url: 'http://localhost:9160/mock/Login' });
+        } catch(e) {
+            assert.equal(e.message, 'invalid options.url.auth.');
+        }
     });
 
     it('instance.url is an object.', function(){
@@ -61,18 +93,18 @@ module.exports = describe('Session', function(){
     });
 
     it('Instance.url.auth set to expected value.', function(){
-        var auth = 'user:pass';
-        assert.equal(instance.url.auth, auth);
+        var parsed = url.parse(config.url);
+        assert.equal(instance.url.auth, parsed.auth);
     });
 
     it('Instance.url.host set to expected value.', function(){
-        var host = 'rets.server.com:9160';
-        assert.equal(instance.url.host, host);
+        var parsed = url.parse(config.url);
+        assert.equal(instance.url.host, parsed.host);
     });
 
     it('Instance.url.path set to expected value.', function(){
-        var path = '/Login.asmx/Login';
-        assert.equal(instance.url.path, path);
+        var parsed = url.parse(config.url);
+        assert.equal(instance.url.path, parsed.path);
     });
 
     it('Has a .headers object.', function(){
@@ -93,7 +125,7 @@ module.exports = describe('Session', function(){
 
     it('.hash returns the expected hash.', function(){
         var md5 = require('MD5');
-        var hash = md5([md5([config.userAgent, config.userAgentPassword].join(':').trim()),'','',instance.version].join(':'));
+        var hash = md5([md5([config.ua.name, config.ua.pass].join(':').trim()),'','',instance.version].join(':'));
         assert.equal(instance.hash(), hash);
     });
 
