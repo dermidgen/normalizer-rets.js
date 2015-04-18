@@ -1,11 +1,11 @@
 var assert = require('assert');
-// var debug = require('debug')('rets.js:rets.test.js');
+// var debug = require('debug')('rets.js:test:rets.test.js');
 
 module.exports = describe('RETS', function(){
 
     var RETS = null;
     var instance = null;
-    var config = require('./servers/config.json')[0];
+    var config = require('./config.json').config;
 
     before('Load RETS', function() {
         RETS = require('../lib/rets');

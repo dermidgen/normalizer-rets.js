@@ -1,12 +1,12 @@
 var assert = require('assert');
 var url = require('url');
-// var debug = require('debug')('rets.js:session.test.js');
+// var debug = require('debug')('rets.js:test:session.test.js');
 
 module.exports = describe('Session', function(){
 
     var Session = null;
     var instance = null;
-    var config = require('./servers/config.json')[0];
+    var config = require('./config.json').config;
     var expectedDefaults = {
         url: null,
         ua: {
